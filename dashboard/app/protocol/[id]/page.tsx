@@ -5,6 +5,7 @@ import {
   ArrowLeft,
   Boxes,
   BookText,
+  Download,
   ExternalLink,
   Globe,
   RefreshCwOff,
@@ -14,6 +15,7 @@ import { notesFor, type ProtocolNote } from '../../lib/protocol-notes';
 import { getProtocolDetail, type HistoryEntry, type ProtocolDetail } from '../../lib/api';
 import { formatTimestamp, freshness } from '../../lib/format';
 import { contractExplorerUrl, shortenContractId } from '../../lib/explorer';
+import { protocolHistoryExportLinks } from '../../lib/score-series';
 import { MarkAttribution, ProtocolLogo } from '../../../components/protocol-logo';
 import { DeploymentBadge, DeploymentNotice } from '../../../components/deployment-badge';
 import { OperationalBadge, OperationalNotice } from '../../../components/operational-badge';
@@ -119,7 +121,7 @@ export default async function ProtocolDetailPage({ params }: { params: Promise<{
 
       <Findings notes={notesFor(detail.id)} name={detail.name} />
 
-      <ScoreHistory history={detail.history} />
+      <ScoreHistory history={detail.history} protocolId={detail.id} protocolName={detail.name} />
 
       <History history={detail.history} />
     </div>
@@ -378,19 +380,52 @@ function RefLink({
  * The score over time — the visible form of the "continuous, not static" pitch.
  * The chart is the reading; the run list below it is the receipts.
  */
-function ScoreHistory({ history }: { history: HistoryEntry[] }) {
+function ScoreHistory({
+  history,
+  protocolId,
+  protocolName,
+}: {
+  history: HistoryEntry[];
+  protocolId: string;
+  protocolName: string;
+}) {
+  const exportLinks = protocolHistoryExportLinks(protocolId, protocolName);
+
   return (
     <section className="mt-14">
       <Reveal>
-        <div className="flex items-center gap-2">
-          <ActivitySquare className="h-4 w-4 text-accent" aria-hidden="true" />
-          <h2 className="font-display text-xl font-semibold text-ink">Score history</h2>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <ActivitySquare className="h-4 w-4 text-accent" aria-hidden="true" />
+              <h2 className="font-display text-xl font-semibold text-ink">Score history</h2>
+            </div>
+            <p className="mt-1 text-sm text-muted">
+              Every indexer run, on a fixed 0–100 axis and a real time axis. The line breaks wherever
+              the score is unknown — a failed run, an indexing gap, or a methodology change — rather
+              than drawing through it.
+            </p>
+          </div>
+
+          <div
+            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-line bg-surface px-2 py-1.5"
+            role="group"
+            aria-label={`Export ${protocolName} score history`}
+          >
+            <Download className="h-4 w-4 text-faint" aria-hidden="true" />
+            <span className="text-sm text-muted">Export</span>
+            {exportLinks.map((link) => (
+              <a
+                key={link.format}
+                href={link.href}
+                aria-label={link.ariaLabel}
+                className="rounded px-2 py-1 text-sm font-medium text-accent-ink transition-colors hover:bg-accent/10 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
         </div>
-        <p className="mt-1 text-sm text-muted">
-          Every indexer run, on a fixed 0–100 axis and a real time axis. The line breaks wherever
-          the score is unknown — a failed run, an indexing gap, or a methodology change — rather
-          than drawing through it.
-        </p>
       </Reveal>
 
       <Reveal delay={0.05} className="mt-5">

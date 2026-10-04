@@ -22,6 +22,38 @@ import type { HistoryEntry } from './contract';
  */
 export const GAP_BREAK_FACTOR = 3;
 
+export const PROTOCOL_HISTORY_EXPORT_FORMATS = ['csv', 'json'] as const;
+export type ProtocolHistoryExportFormat = (typeof PROTOCOL_HISTORY_EXPORT_FORMATS)[number];
+
+export interface ProtocolHistoryExportLink {
+  format: ProtocolHistoryExportFormat;
+  label: string;
+  href: string;
+  ariaLabel: string;
+}
+
+export function protocolHistoryExportHref(id: string, format: ProtocolHistoryExportFormat): string {
+  return `/api/v1/protocol/${encodeURIComponent(id)}/history/export?format=${format}`;
+}
+
+export function protocolHistoryExportLinks(id: string, protocolName?: string): ProtocolHistoryExportLink[] {
+  const target = protocolName ? `${protocolName} score history` : 'score history';
+  return [
+    {
+      format: 'csv',
+      label: 'CSV',
+      href: protocolHistoryExportHref(id, 'csv'),
+      ariaLabel: `Download ${target} as CSV`,
+    },
+    {
+      format: 'json',
+      label: 'JSON',
+      href: protocolHistoryExportHref(id, 'json'),
+      ariaLabel: `Download ${target} as JSON`,
+    },
+  ];
+}
+
 /** Half-width of the synthetic domain used when every run shares one timestamp. */
 const SINGLE_POINT_PAD_MS = 30 * 60_000;
 
