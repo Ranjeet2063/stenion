@@ -12,8 +12,8 @@ import { FactorBreakdown } from './factor-breakdown';
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 /**
- * The last 50 runs, newest first, each `ok` row expandable to the factor
- * breakdown that run computed.
+ * The last 50 runs, newest first, each row expandable (scored runs show factor
+ * breakdown, failed runs show error details).
  *
  * WHY THE BREAKDOWN IS HERE AT ALL. The page already shows the CURRENT score's
  * factors, so the run list could only say a score moved, never which factor
@@ -57,12 +57,11 @@ export function RunHistory({ history }: { history: HistoryEntry[] }) {
           older?.status === 'ok' &&
           older.methodologyVersion < h.methodologyVersion;
 
-        // A failed run has no factors — not an empty map, no key at all — so
-        // there is nothing to expand and no control to offer. See the history
-        // union in lib/contract.
-        const expandable = h.status === 'ok';
-        const isOpen = expandable && open.has(i);
-        const panelId = `run-${i}-factors`;
+        // Both successful and failed runs are expandable: `ok` rows expand to
+        // their factor breakdown, while `failed` rows expand to the underlying
+        // error output (kept collapsed by default to preserve list scannability).
+        const isOpen = open.has(i);
+        const panelId = h.status === 'ok' ? `run-${i}-factors` : `run-${i}-error`;
 
         const summary = (
           <div className="flex items-center gap-3 px-4 py-3 text-sm">
@@ -78,66 +77,50 @@ export function RunHistory({ history }: { history: HistoryEntry[] }) {
                 scored <span className="score-num font-semibold">{h.safetyScore}</span>
               </span>
             ) : (
-              <span className="truncate text-danger">failed — {h.error}</span>
+              <span className="font-medium text-danger">Run failed</span>
             )}
-            {expandable && (
-              // Rotated by framer-motion rather than a conditional `rotate-90`
-              // class, for the same reason the panel below is: it is the same
-              // open/close transition and it should run on the same curve and
-              // duration. It also keeps the rotation off Tailwind's JIT — a
-              // utility that appears nowhere else in the app is one the
-              // scanner has to find in a template literal to emit at all.
-              <motion.span
-                aria-hidden="true"
-                className="ml-auto shrink-0 text-faint"
-                animate={{ rotate: isOpen ? 90 : 0 }}
-                initial={false}
-                transition={{ duration: reduce ? 0 : 0.28, ease: EASE }}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </motion.span>
-            )}
+            <motion.span
+              aria-hidden="true"
+              className="ml-auto shrink-0 text-faint"
+              animate={{ rotate: isOpen ? 90 : 0 }}
+              initial={false}
+              transition={{ duration: reduce ? 0 : 0.28, ease: EASE }}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </motion.span>
           </div>
         );
 
         return (
           <li key={i}>
-            {expandable ? (
-              // The whole row is the trigger, not just the chevron: the chevron
-              // is a 16px target on a full-width row, and the row carries no
-              // other interactive content to compete with the click.
-              <button
-                type="button"
-                onClick={() => toggle(i)}
-                aria-expanded={isOpen}
-                aria-controls={panelId}
-                aria-label={`Run on ${formatTimestamp(h.runAt)}: scored ${
-                  h.safetyScore
-                } out of 100. ${isOpen ? 'Hide' : 'Show'} the factor breakdown for this run`}
-                // `cursor-pointer` explicitly: Tailwind v4's preflight sets
-                // `cursor: default` on <button>, so a row that is plainly
-                // clickable does not look it without this. Same reason
-                // code-block.tsx carries it.
-                className="w-full cursor-pointer bg-surface/40 text-left transition-colors hover:bg-surface-2/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
-              >
-                {summary}
-              </button>
-            ) : (
-              <div
-                className="bg-surface/40"
-                aria-label={`Run on ${formatTimestamp(h.runAt)}: failed with error ${
-                  h.status === 'failed' ? h.error : ''
-                }`}
-              >
-                {summary}
-              </div>
-            )}
+            <button
+              type="button"
+              onClick={() => toggle(i)}
+              aria-expanded={isOpen}
+              aria-controls={panelId}
+              aria-label={
+                h.status === 'ok'
+                  ? `Run on ${formatTimestamp(h.runAt)}: scored ${
+                      h.safetyScore
+                    } out of 100. ${isOpen ? 'Hide' : 'Show'} the factor breakdown for this run`
+                  : `Run on ${formatTimestamp(h.runAt)}: run failed. ${
+                      isOpen ? 'Hide' : 'Show'
+                    } error details`
+              }
+              // `cursor-pointer` explicitly: Tailwind v4's preflight sets
+              // `cursor: default` on <button>, so a row that is plainly
+              // clickable does not look it without this. Same reason
+              // code-block.tsx carries it.
+              className="w-full cursor-pointer bg-surface/40 text-left transition-colors hover:bg-surface-2/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
+            >
+              {summary}
+            </button>
 
             <AnimatePresence initial={false}>
               {isOpen && h.status === 'ok' && (
                 <motion.div
                   id={panelId}
-                  key="panel"
+                  key="factors-panel"
                   initial={reduce ? false : { height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }}
@@ -154,6 +137,25 @@ export function RunHistory({ history }: { history: HistoryEntry[] }) {
                         long after any in-view observer would have fired and
                         stopped. See FactorBreakdown's note on the prop. */}
                     <FactorBreakdown factors={h.factors} trigger="mount" />
+                  </div>
+                </motion.div>
+              )}
+
+              {isOpen && h.status === 'failed' && (
+                <motion.div
+                  id={panelId}
+                  key="error-panel"
+                  initial={reduce ? false : { height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                  transition={{ duration: 0.28, ease: EASE }}
+                  className="overflow-hidden border-t border-line-soft bg-surface-2/30"
+                >
+                  <div className="px-4 py-4">
+                    <p className="mb-2 text-xs font-medium text-muted">Error output:</p>
+                    <div className="max-h-60 overflow-y-auto rounded border border-line-soft bg-surface/60 p-3 font-mono text-xs text-danger break-words whitespace-pre-wrap">
+                      {h.error}
+                    </div>
                   </div>
                 </motion.div>
               )}
