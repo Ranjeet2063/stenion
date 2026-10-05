@@ -23,6 +23,7 @@ import { FactorBreakdown } from '../../../components/factor-breakdown';
 import { Reveal, RevealGroup, RevealItem } from '../../../components/reveal';
 import { RunHistory } from '../../../components/run-history';
 import { ScoreHistoryChart } from '../../../components/score-history-chart';
+import { OracleStalenessView } from '../../../components/oracle-staleness-view';
 
 export const dynamic = 'force-dynamic';
 
@@ -94,6 +95,9 @@ export default async function ProtocolDetailPage({ params }: { params: Promise<{
       )}
 
       <FreshnessNotice detail={detail} />
+      <Reveal delay={0.09}>
+        <OracleStalenessView history={detail.history} />
+      </Reveal>
 
       <ExternalRefs detail={detail} />
 
