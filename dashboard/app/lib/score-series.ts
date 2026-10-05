@@ -36,7 +36,10 @@ export function protocolHistoryExportHref(id: string, format: ProtocolHistoryExp
   return `/api/v1/protocol/${encodeURIComponent(id)}/history/export?format=${format}`;
 }
 
-export function protocolHistoryExportLinks(id: string, protocolName?: string): ProtocolHistoryExportLink[] {
+export function protocolHistoryExportLinks(
+  id: string,
+  protocolName?: string,
+): ProtocolHistoryExportLink[] {
   const target = protocolName ? `${protocolName} score history` : 'score history';
   return [
     {

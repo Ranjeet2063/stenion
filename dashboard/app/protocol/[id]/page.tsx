@@ -401,9 +401,9 @@ function ScoreHistory({
               <h2 className="font-display text-xl font-semibold text-ink">Score history</h2>
             </div>
             <p className="mt-1 text-sm text-muted">
-              Every indexer run, on a fixed 0–100 axis and a real time axis. The line breaks wherever
-              the score is unknown — a failed run, an indexing gap, or a methodology change — rather
-              than drawing through it.
+              Every indexer run, on a fixed 0–100 axis and a real time axis. The line breaks
+              wherever the score is unknown — a failed run, an indexing gap, or a methodology change
+              — rather than drawing through it.
             </p>
           </div>
 
