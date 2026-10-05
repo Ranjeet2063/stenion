@@ -17,7 +17,13 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import type { HistoryEntry, RiskFactorMap } from './contract.ts';
-import { buildScoreSeries, GAP_BREAK_FACTOR, timeTicks } from './score-series.ts';
+import {
+  buildScoreSeries,
+  GAP_BREAK_FACTOR,
+  protocolHistoryExportHref,
+  protocolHistoryExportLinks,
+  timeTicks,
+} from './score-series.ts';
 
 const T0 = Date.parse('2026-08-14T08:00:00.000Z');
 const FIVE_MIN = 5 * 60_000;
@@ -242,5 +248,38 @@ describe('timeTicks', () => {
     const ticks = timeTicks(T0, T0 + 30 * 86_400_000, 6);
     assert.ok(ticks.length <= 6);
     assert.ok(ticks[0].step >= 86_400_000, 'a month-wide axis should not tick hourly');
+  });
+});
+
+describe('protocolHistoryExportLinks', () => {
+  it('targets the historical export endpoint for CSV and JSON', () => {
+    assert.equal(
+      protocolHistoryExportHref('blend', 'csv'),
+      '/api/v1/protocol/blend/history/export?format=csv',
+    );
+    assert.equal(
+      protocolHistoryExportHref('blend', 'json'),
+      '/api/v1/protocol/blend/history/export?format=json',
+    );
+    assert.deepEqual(
+      protocolHistoryExportLinks('blend', 'Blend').map((link) => [link.label, link.href]),
+      [
+        ['CSV', '/api/v1/protocol/blend/history/export?format=csv'],
+        ['JSON', '/api/v1/protocol/blend/history/export?format=json'],
+      ],
+    );
+  });
+
+  it('encodes protocol id safely in the URL path', () => {
+    const url = protocolHistoryExportHref('market/pool#1', 'csv');
+    assert.equal(url, '/api/v1/protocol/market%2Fpool%231/history/export?format=csv');
+  });
+
+  it('provides accessible labels naming the protocol history', () => {
+    for (const link of protocolHistoryExportLinks('blend', 'Blend')) {
+      assert.match(link.ariaLabel, /^Download Blend score history as (CSV|JSON)$/);
+      assert.ok(link.href.startsWith('/api/v1/protocol/blend/history/export?format='));
+      assert.equal(link.label.length > 0, true);
+    }
   });
 });
