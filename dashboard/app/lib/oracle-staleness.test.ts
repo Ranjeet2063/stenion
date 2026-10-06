@@ -3,7 +3,6 @@ import { describe, it } from 'node:test';
 import { calculateOracleStaleness } from './oracle-staleness.ts';
 import type { HistoryEntry } from './contract.ts';
 
-
 describe('calculateOracleStaleness', () => {
   it('returns zeros for empty history', () => {
     const summary = calculateOracleStaleness([]);
@@ -28,7 +27,9 @@ describe('calculateOracleStaleness', () => {
             value: 100,
             weight: 0.25,
             detail: 'fresh',
-            components: [{ id: 'priceFreshness', label: 'Freshness', value: 100, detail: 'current' }],
+            components: [
+              { id: 'priceFreshness', label: 'Freshness', value: 100, detail: 'current' },
+            ],
           },
         },
       },

@@ -44,8 +44,7 @@ export function calculateOracleStaleness(history: HistoryEntry[]): OracleStalene
     }
   }
 
-  const stalePercentage =
-    assessedRuns > 0 ? Math.round((staleRuns / assessedRuns) * 100) : 0;
+  const stalePercentage = assessedRuns > 0 ? Math.round((staleRuns / assessedRuns) * 100) : 0;
 
   return {
     assessedRuns,
