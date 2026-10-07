@@ -1,4 +1,4 @@
-import type { HistoryEntry } from '../app/lib/contract';
+import type { HistoryEntry, RiskFactorComponent } from './contract';
 
 export interface OracleStalenessSummary {
   /** Total runs with a valid factor breakdown in the historical set */
@@ -24,7 +24,6 @@ export interface OracleStalenessSummary {
 export function calculateOracleStaleness(history: HistoryEntry[]): OracleStalenessSummary {
   let assessedRuns = 0;
   let staleRuns = 0;
-
   for (const entry of history) {
     if (entry.status !== 'ok') continue;
 
@@ -34,7 +33,9 @@ export function calculateOracleStaleness(history: HistoryEntry[]): OracleStalene
     assessedRuns += 1;
 
     // Check if the priceFreshness component sub-score or overall factor score is degraded (< 50)
-    const freshnessComp = oracleFactor.components?.find((c) => c.id === 'priceFreshness');
+    const freshnessComp = oracleFactor.components?.find(
+      (c: RiskFactorComponent) => c.id === 'priceFreshness',
+    );
     const isFreshnessStale =
       freshnessComp && freshnessComp.value !== null ? freshnessComp.value < 50 : false;
     const isOverallFactorStale = oracleFactor.value < 50;
